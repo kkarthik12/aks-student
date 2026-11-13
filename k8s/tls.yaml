@@ -11,7 +11,7 @@ spec:
     solvers:
       - http01:
           ingress:
-            ingressClassName: traefik
+            ingressClassName: webapprouting.kubernetes.azure.com
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -26,7 +26,7 @@ spec:
     solvers:
       - http01:
           ingress:
-            ingressClassName: traefik
+            ingressClassName: webapprouting.kubernetes.azure.com
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -34,15 +34,15 @@ metadata:
   name: portal
   namespace: student-gitaction
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
-  ingressClassName: traefik
+  ingressClassName: webapprouting.kubernetes.azure.com
   tls:
     - hosts:
-        - gitaction.mandelbulbtech.shop
+        - karthik.mandelbulbtech.shop
       secretName: portal-tls
   rules:
-    - host: gitaction.mandelbulbtech.shop
+    - host: karthik.mandelbulbtech.shop
       http:
         paths:
           - path: /
