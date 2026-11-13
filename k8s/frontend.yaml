@@ -27,7 +27,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
         - name: frontend
-          image: karthikk8s.azurecr.io/student-frontend-gitaction:1.0
+          image: __REGISTRY__/student-frontend-gitaction:__TAG__
           imagePullPolicy: Always
           ports:
             - containerPort: 80
