@@ -1,0 +1,143 @@
+# ---------- Member A ----------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-a-data
+  namespace: student-gitaction
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: managed-csi
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-a
+  namespace: student-gitaction
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mongo-a
+  template:
+    metadata:
+      labels:
+        app: mongo-a
+        role: mongo-data
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  role: mongo-data
+              topologyKey: kubernetes.io/hostname
+      initContainers:
+        - name: keyfile
+          image: busybox:1.36
+          command: ["sh", "-c", "cp /secret/keyfile /keyfile/keyfile && chmod 400 /keyfile/keyfile && chown 999:999 /keyfile/keyfile"]
+          volumeMounts:
+            - name: secret
+              mountPath: /secret
+            - name: keyfile
+              mountPath: /keyfile
+      containers:
+        - name: mongo
+          image: mongo:7.0
+          args: ["--replSet", "rs0", "--keyFile", "/keyfile/keyfile", "--bind_ip_all"]
+          ports:
+            - containerPort: 27017
+          envFrom:
+            - secretRef:
+                name: mongo-secret
+          readinessProbe:
+            tcpSocket:
+              port: 27017
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+              subPath: db
+            - name: keyfile
+              mountPath: /keyfile
+      volumes:
+        - name: secret
+          secret:
+            secretName: mongo-keyfile
+        - name: keyfile
+          emptyDir: {}
+        - name: data
+          persistentVolumeClaim:
+            claimName: mongo-a-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-a
+  namespace: student-gitaction
+spec:
+  selector:
+    app: mongo-a
+  ports:
+    - port: 27017
+---
+# ---------- Arbiter (no data) ----------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-arb
+  namespace: student-gitaction
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-arb
+  template:
+    metadata:
+      labels:
+        app: mongo-arb
+    spec:
+      initContainers:
+        - name: keyfile
+          image: busybox:1.36
+          command: ["sh", "-c", "cp /secret/keyfile /keyfile/keyfile && chmod 400 /keyfile/keyfile && chown 999:999 /keyfile/keyfile"]
+          volumeMounts:
+            - name: secret
+              mountPath: /secret
+            - name: keyfile
+              mountPath: /keyfile
+      containers:
+        - name: mongo
+          image: mongo:7.0
+          args: ["--replSet", "rs0", "--keyFile", "/keyfile/keyfile", "--bind_ip_all"]
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+            - name: keyfile
+              mountPath: /keyfile
+      volumes:
+        - name: secret
+          secret:
+            secretName: mongo-keyfile
+        - name: keyfile
+          emptyDir: {}
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-arb
+  namespace: student-gitaction
+spec:
+  selector:
+    app: mongo-arb
+  ports:
+    - port: 27017
