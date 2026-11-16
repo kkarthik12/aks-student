@@ -77,6 +77,8 @@ metadata:
   name: mongo-b
   namespace: student-gitaction
 spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
   selector:
     app: mongo-b
   ports:

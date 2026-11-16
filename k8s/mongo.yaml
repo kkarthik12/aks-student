@@ -81,6 +81,8 @@ metadata:
   name: mongo-a
   namespace: student-gitaction
 spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
   selector:
     app: mongo-a
   ports:
@@ -137,6 +139,8 @@ metadata:
   name: mongo-arb
   namespace: student-gitaction
 spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
   selector:
     app: mongo-arb
   ports:
