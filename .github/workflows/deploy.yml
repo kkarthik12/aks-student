@@ -17,7 +17,7 @@ env:
   NS: student-gitaction
   RESOURCE_GROUP: rg-karthik-aks-student
   CLUSTER_NAME: aks-student-app
-  ACR_NAME: aksstudent
+  ACR_NAME: acraksstudent
 
 jobs:
   build:
